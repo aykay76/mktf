@@ -41,7 +41,7 @@
             }
             else
             {
-                @resourceGroup.DisplayName
+                @resourceGroup.Name
             }
         </button>
         <div id="resourceGroups" class="dropdown-menu" aria-labelledby="resourceGroupButton">
@@ -49,7 +49,7 @@
             {
                 @foreach (var rg in resourceGroups)
                 {
-                    <a class="dropdown-item" @onclick="@(()=>ResourceGroupSelected(rg))">@rg.DisplayName</a>
+                    <a class="dropdown-item" @onclick="@(()=>ResourceGroupSelected(rg))">@rg.Name</a>
                 }
             }
         </div>
@@ -58,12 +58,11 @@
 
 <MonacoEditor Id="any-id-string" ConstructionOptions="EditorConstructionOptions" CssClass="my-monaco-editor" />
 
-
 @code {
-    private AzureSubscription[] subscriptions;
-    private AzureResourceGroup[] resourceGroups;
+    private List<AzureSubscription> subscriptions = null;
+    private List<ResourceGroup> resourceGroups = null;
     private AzureSubscription subscription = null;
-    private AzureResourceGroup resourceGroup = null;
+    private ResourceGroup resourceGroup = null;
     private MonacoEditor _editor = null;
 
     protected override async Task OnInitializedAsync()
@@ -95,16 +94,16 @@
         resourceGroups = await AzureService.GetResourceGroups(subscription);
     }
 
-    private async void ResourceGroupSelected(AzureResourceGroup chosenResourceGroup)
+    private async Task ResourceGroupSelected(ResourceGroup chosenResourceGroup)
     {
         resourceGroup = chosenResourceGroup;
 
         // first, populate the nodes of the graph with generic resources
         // the graph builder will get more detailed resource objects as required
         // finally the code emitter will output code that represents the graph
-        IGenericResource[] resources = await AzureService.GetResources(resourceGroup);
+        List<AzureResource> resources = await AzureService.GetResources(resourceGroup);
 
-        var graph = GraphBuilderService.BuildGraph(chosenResourceGroup.SubscriptionID.ToString(), chosenResourceGroup.DisplayName, resources);
+        var graph = await GraphBuilderService.BuildGraph(resourceGroup, resources);
         
         StringBuilder scriptBuilder = new StringBuilder();
         

@@ -26,4 +26,7 @@ ToDo:
 - add resource filter from graph
 - naming convention helper
 - code emission templates
+- emission strategy - one resource per file, one big file?
+- variables and tfvars files or hard-coded?
 - how to handle external references? i.e. things outside the resource group like log analytics etc.
+- create terraform import code to reconcile state

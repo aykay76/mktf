@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using blazorserver.Data;
@@ -13,8 +14,13 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 // each superclass will implement its own methods to handle references, naming, code emission etc.
 public class AzureResource
 {
-    public IResource Inner { get; set; }
     public Dictionary<string, string> Variables { get; set; }
+    public JsonElement Description { get; set; }
+    public string ID { get; set; }
+    public string ResourceProviderNamespace { get; set; }
+    public string Name { get; set; }
+    public string ResourceType { get; set; }
+    public string Location { get; set; }
     
     // TODO: implement sub-blocks
 
@@ -22,11 +28,15 @@ public class AzureResource
     {
     }
 
-    public virtual IResource Resource()
+    public static AzureResource FromJsonElement(JsonElement element)
     {
-        return Inner;
+        AzureResource resource = new AzureResource();
+        resource.ID = element.GetProperty("id").GetString();
+        resource.Name = element.GetProperty("name").GetString();
+        resource.Location = element.GetProperty("location").GetString();
+        return resource;
     }
-    
+
     public virtual List<string> GetReferences()
     {
         return null;
@@ -34,6 +44,6 @@ public class AzureResource
 
     public virtual string Emit()
     {
-        return $"Unhandled resource: {Inner.Name}, {Inner.Type}\r\n";
+        return $"Unhandled resource: {ID}, {Name}, {ResourceType}\r\n";
     }
 }

@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Fluent;
@@ -12,112 +15,153 @@ namespace blazorserver.Data
 {
     public class AzureService
     {
+        private string accessToken = string.Empty;
+        private DateTime expiryTime = DateTime.Now;
+        private string subscriptionId = string.Empty;
+
         public AzureService()
         {
         }
 
-        public Azure.IAuthenticated Authenticate()
+        public async Task Authenticate()
         {
-            string homePath = (Environment.OSVersion.Platform == PlatformID.Unix ||
-                Environment.OSVersion.Platform == PlatformID.MacOSX)
-                    ? Environment.GetEnvironmentVariable("HOME")
-                    : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
+            if (DateTime.Now > expiryTime || accessToken == string.Empty)
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    string clientId = System.Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
+                    string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
+                    subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
+                    string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
 
-            AzureCredentialsFactory factory = new AzureCredentialsFactory();
-            AzureCredentials creds = factory.FromFile($"{homePath}/.azure/authfile");
-
-            return Azure.Authenticate(creds);
+                    Dictionary<string, string> body = new Dictionary<string, string>() {
+                        { "grant_type", "client_credentials" },
+                        { "resource", "https://management.azure.com" },
+                        { "client_id", clientId },
+                        { "client_secret", clientSecret }
+                    };
+                    
+                    var response = await client.PostAsync($"https://login.microsoftonline.com/{tenantId}/oauth2/token", new FormUrlEncodedContent(body));
+                    string result = await response.Content.ReadAsStringAsync();
+                    JsonDocument doc = JsonDocument.Parse(result);
+                    accessToken = doc.RootElement.GetProperty("access_token").GetString();
+                    int expiryEpoch = int.Parse(doc.RootElement.GetProperty("expires_on").GetString());
+                    expiryTime = DateTimeOffset.FromUnixTimeSeconds(expiryEpoch).DateTime;
+                }
+            }
         }
 
-        public async Task<AzureSubscription[]> GetSubscriptions()
+        public async Task<JsonDocument> CallARM(string url)
+        {
+            await Authenticate();
+
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+                var resources = await client.GetAsync(url);
+                var result = await resources.Content.ReadAsStringAsync();
+                Console.WriteLine(url);
+                Console.WriteLine(result);
+                var doc = JsonDocument.Parse(result);                
+                return doc;
+            }
+        }
+
+
+        public async Task<List<AzureSubscription>> GetSubscriptions()
         {
             string deviceMessage = string.Empty;
 
             try
             {
-                var auth = Authenticate();
-
                 List<AzureSubscription> subscriptions = new List<AzureSubscription>();
 
-                var subs = await auth.Subscriptions.ListAsync();
-                if (subs != null)
+                JsonDocument result = await CallARM("https://management.azure.com/subscriptions?api-version=2020-01-01");
+                var e = result.RootElement.GetProperty("value").EnumerateArray();
+                while (e.MoveNext())
                 {
-                    foreach (var sub in auth.Subscriptions.List().ToArray())
-                    {
-                        subscriptions.Add(new AzureSubscription { ID = Guid.Parse(sub.SubscriptionId), DisplayName = sub.DisplayName });
-                    }
+                    subscriptions.Add(AzureSubscription.FromJsonElement(e.Current));
                 }
 
-                return subscriptions.ToArray();
+                return subscriptions;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return new AzureSubscription[] { new AzureSubscription { ID = Guid.Empty, DisplayName = ex.ToString() } };
+                return null;
             }
         }
 
-        public async Task<AzureResourceGroup[]> GetResourceGroups(AzureSubscription subscription)
+        public async Task<List<ResourceGroup>> GetResourceGroups(AzureSubscription subscription)
         {
             try
             {
-                var auth = Authenticate();
+                List<ResourceGroup> resourceGroups = new List<ResourceGroup>();
 
-                List<AzureResourceGroup> resourceGroups = new List<AzureResourceGroup>();
-                var rgs = await auth.WithSubscription(subscription.ID.ToString()).ResourceGroups.ListAsync(true);
-                foreach (IResourceGroup rg in rgs)
+                JsonDocument result = await CallARM($"https://management.azure.com/subscriptions/{subscriptionId}/resourcegroups?api-version=2020-06-01");
+                var e = result.RootElement.GetProperty("value").EnumerateArray();
+                while (e.MoveNext())
                 {
-                    resourceGroups.Add(new AzureResourceGroup { ID = rg.Id, DisplayName = rg.Name, SubscriptionID = subscription.ID });
+                    resourceGroups.Add(ResourceGroup.FromJsonElement(e.Current));
                 }
+                
+                resourceGroups.Sort((i1, i2)=>{return i1.Name.CompareTo(i2.Name);});
 
-                resourceGroups.Sort((i1, i2)=>{return i1.DisplayName.CompareTo(i2.DisplayName);});
-
-                return resourceGroups.ToArray();
+                return resourceGroups;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return new AzureResourceGroup[] { new AzureResourceGroup { ID = string.Empty, DisplayName = ex.ToString() } };
+                return null;
             }
         }
 
-        public async Task<IGenericResource[]> GetResources(AzureResourceGroup group)
+        public async Task<List<AzureResource>> GetResources(ResourceGroup resourceGroup)
         {
             try
             {
-                var auth = Authenticate();
+                List<AzureResource> resources = new List<AzureResource>();
 
-                List<AzureResourceGroup> resourceGroups = new List<AzureResourceGroup>();
-                IAzure azure = auth.WithSubscription(group.SubscriptionID.ToString());
-                var resources = await azure.GenericResources.ListByResourceGroupAsync(group.DisplayName);
+                JsonDocument result = await CallARM($"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup.Name}/resources?api-version=2020-06-01");
+                var e = result.RootElement.GetProperty("value").EnumerateArray();
+                while (e.MoveNext())
+                {
+                    resources.Add(AzureResource.FromJsonElement(e.Current));
+                }
 
-                return resources.ToArray();
+                return resources;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                return new IGenericResource[] { };
+                return null;
             }
         }
 
-        public IResourceGroup GetResourceGroup(string subscriptionId, string resourceGroupName)
+        public async Task<AzureResource> GetResourceGroup(string resourceGroupName)
         {
-            return Authenticate().WithSubscription(subscriptionId).ResourceGroups.GetByName(resourceGroupName);
+            JsonDocument result = await CallARM($"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}?api-version=2020-06-01");
+            return null;
         }
 
-        public IPublicIPAddress GetPublicIPAddress(string subscriptionId, string resourceGroupName, string resourceName)
-        {
-            return Authenticate().WithSubscription(subscriptionId).PublicIPAddresses.GetByResourceGroup(resourceGroupName, resourceName);
-        }
+        // public async Task<IPublicIPAddress> GetPublicIPAddress(string subscriptionId, string resourceGroupName, string resourceName)
+        // {
+        //     return (await Authenticate()).WithSubscription(subscriptionId).PublicIPAddresses.GetByResourceGroup(resourceGroupName, resourceName);
+        // }
 
-        public IApplicationGateway GetApplicationGateway(string subscriptionId, string resourceGroupName, string resourceName)
-        {
-            return Authenticate().WithSubscription(subscriptionId).ApplicationGateways.GetByResourceGroup(resourceGroupName, resourceName);
-        }
+        // public async Task<IApplicationGateway> GetApplicationGateway(string subscriptionId, string resourceGroupName, string resourceName)
+        // {
+        //     return (await Authenticate()).WithSubscription(subscriptionId).ApplicationGateways.GetByResourceGroup(resourceGroupName, resourceName);
+        // }
 
-        public IContainerGroup GetContainerGroup(string subscriptionId, string resourceGroupName, string resourceName)
-        {
-            return Authenticate().WithSubscription(subscriptionId).ContainerGroups.GetByResourceGroup(resourceGroupName, resourceName);
-        }
+        // public async Task<INetwork> GetNetwork(string subscriptionId, string resourceGroupName, string resourceName)
+        // {
+        //     return (await Authenticate()).WithSubscription(subscriptionId).Networks.GetByResourceGroup(resourceGroupName, resourceName);
+        // }
+
+        // public async Task<IContainerGroup> GetContainerGroup(string subscriptionId, string resourceGroupName, string resourceName)
+        // {
+        //     return (await Authenticate()).WithSubscription(subscriptionId).ContainerGroups.GetByResourceGroup(resourceGroupName, resourceName);
+        // }
     }
 }
