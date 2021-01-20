@@ -151,7 +151,7 @@ namespace blazorserver.Data
         {
             // using a list because in special cases we might load subresources too
             List<AzureResource> resources = new List<AzureResource>();
-            AzureResource resource = stub;
+            AzureResource resource = null;
 
             try
             {
@@ -160,9 +160,8 @@ namespace blazorserver.Data
 
                 foreach (Type t in types)
                 {
-                    FieldInfo[] fields = t.GetFields();
-                    FieldInfo f = t.GetField("AzureType");
-                    if (f != null && f.GetValue(null).ToString() == stub.Type)
+                    FieldInfo fi = t.GetField("AzureType");
+                    if (fi != null && fi.GetValue(null).ToString() == stub.Type)
                     {
                         // generic method of loading a single resource
                         string apiVersion = t.GetField("ApiVersion").GetValue(null).ToString();
@@ -197,6 +196,40 @@ namespace blazorserver.Data
                                 resources.Add(assoc);
                             }                        
                         }
+                        if (stub.Type == DnsZone.AzureType)
+                        {
+                            // DNS zones don't contain records so we need to add each one as a separate resource
+                            JsonDocument records = await CallARM($"https://management.azure.com{stub.ID}/all?api-version={apiVersion}");
+
+                            ArrayEnumerator recordEnum = records.RootElement.GetProperty("value").EnumerateArray();
+                            while (recordEnum.MoveNext())
+                            {
+                                // this could be a recursive call, is it better to load the object twice or to duplicate this code? :S
+                                string type = recordEnum.Current.GetProperty("type").GetString();
+
+                                if (type == "Microsoft.Network/dnszones/CNAME")
+                                {
+                                    var record = DnsZoneCNAME.FromJsonElement(recordEnum.Current) as DnsZoneCNAME;
+                                    record.Location = stub.Location;
+                                    record.ZoneName = stub.Name;
+                                    resources.Add(record);
+                                }
+                                if (type == "Microsoft.Network/dnszones/TXT")
+                                {
+                                    var record = DnsZoneTXT.FromJsonElement(recordEnum.Current) as DnsZoneTXT;
+                                    record.Location = stub.Location;
+                                    record.ZoneName = stub.Name;
+                                    resources.Add(record);
+                                }
+                                if (type == "Microsoft.Network/dnszones/A")
+                                {
+                                    var record = DnsZoneA.FromJsonElement(recordEnum.Current) as DnsZoneA;
+                                    record.Location = stub.Location;
+                                    record.ZoneName = stub.Name;
+                                    resources.Add(record);
+                                }
+                            }
+                        }
 
                         string filename = $"../{stub.Type.Replace('/', '_')}.json";
                         if (File.Exists(filename) == false)
@@ -205,6 +238,11 @@ namespace blazorserver.Data
                             File.WriteAllText(filename, s);
                         }
                     }
+                }
+
+                if (resource == null)
+                {
+                    resources.Add(stub);
                 }
             }
             catch (Exception ex)

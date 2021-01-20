@@ -41,7 +41,7 @@ public class AzureResource
 
     public static string TerraformNameFromResourceName(string resourceName)
     {
-        return resourceName.Replace('-', '_');
+        return resourceName.Replace('-', '_').Replace('.', '_');
     }
 
     public virtual List<string> GetReferences()
