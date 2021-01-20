@@ -30,3 +30,4 @@ ToDo:
 - variables and tfvars files or hard-coded?
 - how to handle external references? i.e. things outside the resource group like log analytics etc.
 - create terraform import code to reconcile state
+- define variables for things like location etc.

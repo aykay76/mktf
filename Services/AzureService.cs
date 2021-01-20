@@ -175,7 +175,7 @@ namespace blazorserver.Data
                         }
 
                         // in special cases we want to load subresources, such as subnets in a virtual network that we want to create as separate objects
-                        if (stub.Type == "Microsoft.Network/virtualNetworks")
+                        if (stub.Type == VirtualNetwork.AzureType)
                         {
                             ArrayEnumerator subnetEnum = result.RootElement.GetProperty("properties").GetProperty("subnets").EnumerateArray();
                             while (subnetEnum.MoveNext())
@@ -185,9 +185,18 @@ namespace blazorserver.Data
                                 resources.Add(subnet);
                             }
                         }
-
-                        // TODO: need to handle subnet-NSG associations as a separate object because we're handling the subnets separately
-                        // inline blocks for subnets don't support delegations and service endpoints.
+                        if (stub.Type == NetworkSecurityGroup.AzureType)
+                        {
+                            // if subnet is defined we need to add an association because inline subnet blocks don't support delegation or service endpoints
+                            NetworkSecurityGroup nsg = resource as NetworkSecurityGroup;
+                            foreach (string subnet in nsg.Subnets)
+                            {
+                                SubnetNetworkSecurityGroupAssociation assoc = new SubnetNetworkSecurityGroupAssociation();
+                                assoc.SubnetName = subnet;
+                                assoc.NetworkSecurityGroupName = nsg.Name;
+                                resources.Add(assoc);
+                            }                        
+                        }
 
                         string filename = $"../{stub.Type.Replace('/', '_')}.json";
                         if (File.Exists(filename) == false)

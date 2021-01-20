@@ -5,28 +5,42 @@ using blazorserver.Data;
 using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
+using static System.Text.Json.JsonElement;
 
-public class Subnet : AzureResource
+public class NetworkSecurityGroup : AzureResource
 {
-    public static string AzureType = "Microsoft.Network/virtualNetworks/subnets";
+    public static string AzureType = "Microsoft.Network/networkSecurityGroups";
     public static string ApiVersion = "2020-07-01";
-    public static string TerraformType = "azurerm_subnet";
+    public static string TerraformType = "azurerm_network_security_group";
 
-    public string VirtualNetworkName { get; set; }
-    public string AddressPrefix { get; set; }
+    public List<string> Subnets { get; set; }
+
+    public NetworkSecurityGroup()
+    {
+        Subnets = new List<string>();
+    }
 
     public static new AzureResource FromJsonElement(JsonElement element)
     {
-        Subnet resource = new Subnet();
+        NetworkSecurityGroup resource = new NetworkSecurityGroup();
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();
         resource.Name = element.GetProperty("name").GetString();
         resource.Type = element.GetProperty("type").GetString();
+        resource.Location = element.GetProperty("location").GetString();
 
-        // TODO: resource specific information
-        // VirtualNetworkName is not known here, will be set by caller on return
-        resource.AddressPrefix = element.GetProperty("properties").GetProperty("addressPrefix").GetString();
+        // TODO: process the securityRules property
+
+        JsonElement properties = element.GetProperty("properties");
+        ArrayEnumerator subnetEnum = properties.GetProperty("subnets").EnumerateArray();
+        while (subnetEnum.MoveNext())
+        {
+            string subnetId = subnetEnum.Current.GetProperty("id").GetString();
+            // I only want the name, strip the rest
+            string[] parts = subnetId.Split('/');
+            resource.Subnets.Add(parts[parts.Length - 1]);
+        }
 
         return resource;
     }
@@ -46,10 +60,9 @@ public class Subnet : AzureResource
 
         builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
         builder.Append($"  resource_group_name  = \"{ResourceGroupName}\"\r\n");
-        builder.Append($"  virtual_network_name = azurerm_virtual_network.{TerraformNameFromResourceName(VirtualNetworkName)}.name\r\n");
+        builder.Append($"  location             = \"{Location}\"\r\n");
         builder.Append("\r\n");
-        builder.Append($"  name             = \"{Name}\"\r\n");
-        builder.Append($"  address_prefixes = [\"{AddressPrefix}\"]\r\n");
+        builder.Append($"  name = \"{Name}\"\r\n");
         builder.Append($"}}\r\n");
 
         return builder.ToString();
