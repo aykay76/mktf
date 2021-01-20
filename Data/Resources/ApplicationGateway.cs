@@ -6,6 +6,10 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 public class ApplicationGateway : AzureResource
 {
+    public static string AzureType = "Microsoft.Network/applicationGateways";
+    public static string ApiVersion = "2020-07-01";
+    public static string TerraformType = "azurerm_application_gateway";
+
     public override List<string> GetReferences()
     {
         List<string> refs = new List<string>();

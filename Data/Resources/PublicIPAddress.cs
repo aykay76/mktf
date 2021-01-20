@@ -6,6 +6,10 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 public class PublicIPAddress : AzureResource
 {
+    public static string AzureType = "Microsoft.Network/publicIPAddresses";
+    public static string ApiVersion = "2020-07-01";
+    public static string TerraformType = "azurerm_public_ip";
+
     public override List<string> GetReferences()
     {
         List<string> refs = new List<string>();

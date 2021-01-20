@@ -7,6 +7,10 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 public class ContainerGroup : AzureResource
 {
+    public static string AzureType = "Microsoft.ContainerInstance/containerGroups";
+    public static string ApiVersion = "2019-12-01";
+    public static string TerraformType = "azurerm_container_group";
+
     public override List<string> GetReferences()
     {
         List<string> refs = new List<string>();

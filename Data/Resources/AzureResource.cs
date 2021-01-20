@@ -12,18 +12,18 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 
 /// This is the base class for Azure resources that will be included in output
 // each superclass will implement its own methods to handle references, naming, code emission etc.
+// The basic information in this class comes from a simple list of resources, stub information to then be able to get more
+// https://docs.microsoft.com/en-us/rest/api/resources/resources/listbyresourcegroup
+
 public class AzureResource
 {
     public Dictionary<string, string> Variables { get; set; }
     public JsonElement Description { get; set; }
     public string ID { get; set; }
-    public string ResourceProviderNamespace { get; set; }
     public string Name { get; set; }
-    public string ResourceType { get; set; }
+    public string Type { get; set; }
     public string Location { get; set; }
     
-    // TODO: implement sub-blocks
-
     public AzureResource()
     {
     }
@@ -33,6 +33,7 @@ public class AzureResource
         AzureResource resource = new AzureResource();
         resource.ID = element.GetProperty("id").GetString();
         resource.Name = element.GetProperty("name").GetString();
+        resource.Type = element.GetProperty("type").GetString();
         resource.Location = element.GetProperty("location").GetString();
         return resource;
     }
@@ -44,6 +45,6 @@ public class AzureResource
 
     public virtual string Emit()
     {
-        return $"Unhandled resource: {ID}, {Name}, {ResourceType}\r\n";
+        return $"Unhandled resource: {ID}, {Name}, {Type}, {Location}\r\n";
     }
 }

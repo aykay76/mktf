@@ -14,7 +14,7 @@ public class ResourceGroup : AzureResource
         
         result.ID = element.GetProperty("id").GetString();
         result.Name = element.GetProperty("name").GetString();
-        result.ResourceType = element.GetProperty("type").GetString();
+        result.Type = element.GetProperty("type").GetString();
         result.Location = element.GetProperty("location").GetString();
 
         return result;
@@ -30,8 +30,8 @@ public class ResourceGroup : AzureResource
         StringBuilder builder = new StringBuilder();
 
         builder.Append($"resource \"azurerm_resource_group\" \"{Name.Replace('-', '_')}\" {{\r\n");
-        builder.Append($"  resource_group_name = {Name}\r\n");
-        builder.Append($"  location            = {Location}\r\n");
+        builder.Append($"  resource_group_name = \"{Name}\"\r\n");
+        builder.Append($"  location            = \"{Location}\"\r\n");
         builder.Append($"}}\r\n");
 
         return builder.ToString();

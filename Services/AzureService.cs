@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -142,6 +143,38 @@ namespace blazorserver.Data
         {
             JsonDocument result = await CallARM($"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}?api-version=2020-06-01");
             return null;
+        }
+
+        public async Task<AzureResource> LoadResource(AzureResource stub)
+        {
+            AzureResource resource = stub;
+
+            try
+            {
+                Assembly a = Assembly.GetExecutingAssembly();
+                List<Type> types = a.GetTypes().Where(t => t.IsClass && t.BaseType == typeof(AzureResource)).ToList();
+
+                foreach (Type t in types)
+                {
+                    FieldInfo[] fields = t.GetFields();
+                    FieldInfo f = t.GetField("AzureType");
+                    if (f != null && f.GetValue(null).ToString() == stub.Type)
+                    {
+                        string apiVersion = t.GetField("ApiVersion").GetValue(null).ToString();
+                        JsonDocument result = await CallARM($"https://management.azure.com{stub.ID}?api-version={apiVersion}");
+                        resource = (AzureResource)t.GetMethod("FromJsonElement").Invoke(null, new object[] {result.RootElement});
+                    }
+                }
+
+                 //t.GetProperty("Type").GetValue(null).ToString() == stub.Type
+    //            AzureResource resource = (AzureResource)Activator.CreateInstance(t);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            return resource;
         }
 
         // public async Task<IPublicIPAddress> GetPublicIPAddress(string subscriptionId, string resourceGroupName, string resourceName)
