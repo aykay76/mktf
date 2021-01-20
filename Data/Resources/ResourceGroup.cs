@@ -8,7 +8,11 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 public class ResourceGroup : AzureResource
 {
-    new public static ResourceGroup FromJsonElement(JsonElement element)
+    public static string AzureType = "resourcegroup";
+    public static string ApiVersion = "2020-06-01";
+    public static string TerraformType = "azurerm_resource_group";
+
+    new public static AzureResource FromJsonElement(JsonElement element)
     {
         ResourceGroup result = new ResourceGroup();
         
@@ -33,6 +37,7 @@ public class ResourceGroup : AzureResource
         builder.Append($"  resource_group_name = \"{Name}\"\r\n");
         builder.Append($"  location            = \"{Location}\"\r\n");
         builder.Append($"}}\r\n");
+        builder.Append("\r\n");
 
         return builder.ToString();
     }

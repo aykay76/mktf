@@ -28,15 +28,21 @@ public class GraphBuilderService
         foreach (var stub in resources)
         {
             // ask the Azure service to load the full resource, if it can't it should return the same stub
-            AzureResource resource = await _azureService.LoadResource(stub);
-            
-            // create a node and add it to the graph
-            Node<AzureResource> resourceNode = new Node<AzureResource>(resource);
-            graph.AddNode(resourceNode);
+            List<AzureResource> resourceList = await _azureService.LoadResource(stub);
+            foreach (AzureResource resource in resourceList)
+            {
+                resource.ResourceGroupName = resourceGroup.Name;
+                
+                // create a node and add it to the graph
+                Node<AzureResource> resourceNode = new Node<AzureResource>(resource);
+                graph.AddNode(resourceNode);
 
-            // link the resource node to the resource group node
-            graph.AddDirectedEdge(resourceNode, resourceGroupNode, "contained by");
-            graph.AddDirectedEdge(resourceGroupNode, resourceNode, "contains");
+                // TODO: how to handle relationships between subobjects? probably assume first object is parent and subsequent objects are children
+
+                // link the resource node to the resource group node
+                graph.AddDirectedEdge(resourceNode, resourceGroupNode, "contained by");
+                graph.AddDirectedEdge(resourceGroupNode, resourceNode, "contains");
+            }
         }
 
         // // iterate through the nodes, looking for relationships

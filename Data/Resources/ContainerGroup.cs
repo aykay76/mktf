@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using blazorserver.Data;
 using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
@@ -10,6 +11,21 @@ public class ContainerGroup : AzureResource
     public static string AzureType = "Microsoft.ContainerInstance/containerGroups";
     public static string ApiVersion = "2019-12-01";
     public static string TerraformType = "azurerm_container_group";
+
+    public static new AzureResource FromJsonElement(JsonElement element)
+    {
+        ContainerGroup resource = new ContainerGroup();
+
+        // basic information
+        resource.ID = element.GetProperty("id").GetString();
+        resource.Name = element.GetProperty("name").GetString();
+        resource.Type = element.GetProperty("type").GetString();
+        resource.Location = element.GetProperty("location").GetString();
+
+        // TODO: resource specific information
+
+        return resource;
+    }
 
     public override List<string> GetReferences()
     {
@@ -24,10 +40,11 @@ public class ContainerGroup : AzureResource
     {
         StringBuilder builder = new StringBuilder();
 
-        // builder.Append($"resource \"azurerm_container_group\" \"{Inner.Name.Replace('-', '_')}\" {{\r\n");
-        // builder.Append($"  resource_group_name = {Inner.ResourceGroupName}\r\n");
-        // builder.Append($"  location            = {Inner.RegionName}\r\n");
-        // builder.Append($"}}\r\n");
+        builder.Append($"resource \"{TerraformType}\" \"{Name.Replace('-', '_')}\" {{\r\n");
+        builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
+        builder.Append($"  location            = {Location}\r\n");
+        builder.Append($"}}\r\n");
+        builder.Append("\r\n");
 
         return builder.ToString();
     }

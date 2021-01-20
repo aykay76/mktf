@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -11,6 +12,7 @@ using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
+using static System.Text.Json.JsonElement;
 
 namespace blazorserver.Data
 {
@@ -93,11 +95,11 @@ namespace blazorserver.Data
             }
         }
 
-        public async Task<List<ResourceGroup>> GetResourceGroups(AzureSubscription subscription)
+        public async Task<List<AzureResource>> GetResourceGroups(AzureSubscription subscription)
         {
             try
             {
-                List<ResourceGroup> resourceGroups = new List<ResourceGroup>();
+                List<AzureResource> resourceGroups = new List<AzureResource>();
 
                 JsonDocument result = await CallARM($"https://management.azure.com/subscriptions/{subscriptionId}/resourcegroups?api-version=2020-06-01");
                 var e = result.RootElement.GetProperty("value").EnumerateArray();
@@ -145,8 +147,10 @@ namespace blazorserver.Data
             return null;
         }
 
-        public async Task<AzureResource> LoadResource(AzureResource stub)
+        public async Task<List<AzureResource>> LoadResource(AzureResource stub)
         {
+            // using a list because in special cases we might load subresources too
+            List<AzureResource> resources = new List<AzureResource>();
             AzureResource resource = stub;
 
             try
@@ -160,41 +164,46 @@ namespace blazorserver.Data
                     FieldInfo f = t.GetField("AzureType");
                     if (f != null && f.GetValue(null).ToString() == stub.Type)
                     {
+                        // generic method of loading a single resource
                         string apiVersion = t.GetField("ApiVersion").GetValue(null).ToString();
                         JsonDocument result = await CallARM($"https://management.azure.com{stub.ID}?api-version={apiVersion}");
-                        resource = (AzureResource)t.GetMethod("FromJsonElement").Invoke(null, new object[] {result.RootElement});
+                        MethodInfo method = t.GetMethod("FromJsonElement");
+                        if (method != null)
+                        {
+                            resource = (AzureResource)method.Invoke(null, new object[] {result.RootElement});
+                            resources.Add(resource);
+                        }
+
+                        // in special cases we want to load subresources, such as subnets in a virtual network that we want to create as separate objects
+                        if (stub.Type == "Microsoft.Network/virtualNetworks")
+                        {
+                            ArrayEnumerator subnetEnum = result.RootElement.GetProperty("properties").GetProperty("subnets").EnumerateArray();
+                            while (subnetEnum.MoveNext())
+                            {
+                                Subnet subnet = Subnet.FromJsonElement(subnetEnum.Current) as Subnet;
+                                subnet.VirtualNetworkName = stub.Name;
+                                resources.Add(subnet);
+                            }
+                        }
+
+                        // TODO: need to handle subnet-NSG associations as a separate object because we're handling the subnets separately
+                        // inline blocks for subnets don't support delegations and service endpoints.
+
+                        string filename = $"../{stub.Type.Replace('/', '_')}.json";
+                        if (File.Exists(filename) == false)
+                        {
+                            string s = result.RootElement.ToString();
+                            File.WriteAllText(filename, s);
+                        }
                     }
                 }
-
-                 //t.GetProperty("Type").GetValue(null).ToString() == stub.Type
-    //            AzureResource resource = (AzureResource)Activator.CreateInstance(t);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
 
-            return resource;
+            return resources;
         }
-
-        // public async Task<IPublicIPAddress> GetPublicIPAddress(string subscriptionId, string resourceGroupName, string resourceName)
-        // {
-        //     return (await Authenticate()).WithSubscription(subscriptionId).PublicIPAddresses.GetByResourceGroup(resourceGroupName, resourceName);
-        // }
-
-        // public async Task<IApplicationGateway> GetApplicationGateway(string subscriptionId, string resourceGroupName, string resourceName)
-        // {
-        //     return (await Authenticate()).WithSubscription(subscriptionId).ApplicationGateways.GetByResourceGroup(resourceGroupName, resourceName);
-        // }
-
-        // public async Task<INetwork> GetNetwork(string subscriptionId, string resourceGroupName, string resourceName)
-        // {
-        //     return (await Authenticate()).WithSubscription(subscriptionId).Networks.GetByResourceGroup(resourceGroupName, resourceName);
-        // }
-
-        // public async Task<IContainerGroup> GetContainerGroup(string subscriptionId, string resourceGroupName, string resourceName)
-        // {
-        //     return (await Authenticate()).WithSubscription(subscriptionId).ContainerGroups.GetByResourceGroup(resourceGroupName, resourceName);
-        // }
     }
 }

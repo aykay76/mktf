@@ -1,5 +1,6 @@
 @page "/"
 @using System.Text.Json
+@using System.IO
 
 <h1>Hello, world!</h1>
 
@@ -10,7 +11,7 @@ Welcome to your new app.
 
     protected override async Task OnInitializedAsync()
     {
-        @* using (HttpClient client = new HttpClient())
+        using (HttpClient client = new HttpClient())
         {
             string clientId = System.Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
             string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
@@ -33,10 +34,16 @@ Welcome to your new app.
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
             var resources = await client.GetAsync($"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups?api-version=2020-06-01");
             result = await resources.Content.ReadAsStringAsync();
-            Console.WriteLine(result);
+
+            string filename = $"../Microsoft.Network_virtualNetworks_subnets.json";
+            if (File.Exists(filename) == false)
+            {
+                File.WriteAllText(filename, result);
+            }
+
             doc = JsonDocument.Parse(result);
             StateHasChanged();
-        } *@
+        }
     }
 }
 

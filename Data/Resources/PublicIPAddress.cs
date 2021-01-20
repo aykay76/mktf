@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
@@ -9,6 +10,27 @@ public class PublicIPAddress : AzureResource
     public static string AzureType = "Microsoft.Network/publicIPAddresses";
     public static string ApiVersion = "2020-07-01";
     public static string TerraformType = "azurerm_public_ip";
+
+    // additional fields for output to TF
+    public string SKU { get; set; }
+    public string AllocationMethod { get; set; }
+
+    public static new AzureResource FromJsonElement(JsonElement element)
+    {
+        PublicIPAddress resource = new PublicIPAddress();
+
+        // basic information
+        resource.ID = element.GetProperty("id").GetString();
+        resource.Name = element.GetProperty("name").GetString();
+        resource.Type = element.GetProperty("type").GetString();
+        resource.Location = element.GetProperty("location").GetString();
+
+        // resource specific information
+        resource.AllocationMethod = element.GetProperty("properties").GetProperty("publicIPAllocationMethod").GetString();
+        resource.SKU = element.GetProperty("sku").GetProperty("name").GetString();
+
+        return resource;
+    }
 
     public override List<string> GetReferences()
     {
@@ -47,10 +69,14 @@ public class PublicIPAddress : AzureResource
     {
         StringBuilder builder = new StringBuilder();
 
-        // builder.Append($"resource \"azurerm_public_ip\" \"{Inner.Name.Replace('-', '_')}\" {{\r\n");
-        // builder.Append($"  resource_group_name = {Inner.ResourceGroupName}\r\n");
-        // builder.Append($"  location            = {Inner.RegionName}\r\n");
-        // builder.Append($"}}\r\n");
+        builder.Append($"resource \"{TerraformType}\" \"{Name.Replace('-', '_')}\" {{\r\n");
+        builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
+        builder.Append($"  location            = {Location}\r\n");
+        builder.Append($"\r\n");
+        builder.Append($"  sku               = \"{SKU}\"\r\n");
+        builder.Append($"  allocation_method = \"{AllocationMethod}\"\r\n");
+        builder.Append($"}}\r\n");
+        builder.Append("\r\n");
 
         return builder.ToString();
     }
