@@ -230,6 +230,17 @@ namespace blazorserver.Data
                                 }
                             }
                         }
+                        if (stub.Type == KeyVault.AzureType)
+                        {
+                            // enumerate the access policies and create separately - inline blocks only support 16 access policies
+                            ArrayEnumerator policyEnum = result.RootElement.GetProperty("properties").GetProperty("accessPolicies").EnumerateArray();
+                            while (policyEnum.MoveNext())
+                            {
+                                var policy = KeyVaultAccessPolicy.FromJsonElement(policyEnum.Current) as KeyVaultAccessPolicy;
+                                policy.KeyVaultName = stub.Name;
+                                resources.Add(policy);
+                            }
+                        }
 
                         string filename = $"../{stub.Type.Replace('/', '_')}.json";
                         if (File.Exists(filename) == false)
