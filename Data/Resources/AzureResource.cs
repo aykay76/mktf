@@ -51,6 +51,6 @@ public class AzureResource
 
     public virtual string Emit()
     {
-        return $"Unhandled resource: {ID}, {Name}, {Type}, {Location}\r\n";
+        return $"# Unhandled resource: {ID}, {Name}, {Type}, {Location}\r\n";
     }
 }
