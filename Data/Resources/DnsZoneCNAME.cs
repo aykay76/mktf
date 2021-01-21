@@ -44,7 +44,7 @@ public class DnsZoneCNAME : AzureResource
         StringBuilder builder = new StringBuilder();
 
         builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
-        builder.Append($"  name                = {Name}\r\n");
+        builder.Append($"  name                = \"{Name}\"\r\n");
         builder.Append($"  zone_name = {DnsZone.TerraformType}.{TerraformNameFromResourceName(ZoneName)}.name\r\n");
         builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
 
