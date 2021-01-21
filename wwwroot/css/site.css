@@ -42,15 +42,26 @@ a, .btn-link {
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
 
-    
-    .my-monaco-editor {
-        height: 600px;
-        border: solid 1px grey;
-    }
+
+.my-monaco-editor {
+    height: 600px;
+    border: solid 1px grey;
+}
+
+#subscriptions {
+    height: auto;
+    max-height: 300px;
+}
+
+#resourceGroups {
+    height: auto;
+    max-height: 300px;
+    overflow-y: auto;
+}
