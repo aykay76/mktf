@@ -15,6 +15,7 @@ public class ContainerGroup : AzureResource
     public static new AzureResource FromJsonElement(JsonElement element)
     {
         ContainerGroup resource = new ContainerGroup();
+        resource.Description = element;
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();

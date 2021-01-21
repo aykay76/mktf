@@ -25,6 +25,7 @@ public class DnsZoneTXT : AzureResource
     public static new AzureResource FromJsonElement(JsonElement element)
     {
         DnsZoneTXT resource = new DnsZoneTXT();
+        resource.Description = element;
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();
@@ -49,11 +50,7 @@ public class DnsZoneTXT : AzureResource
 
     public override List<string> GetReferences()
     {
-        List<string> refs = new List<string>();
-
-        // TODO: find any external references - maybe network profile or image server (ACR)
-
-        return refs;
+        return null;
     }
 
     public override string Emit()

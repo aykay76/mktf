@@ -18,6 +18,7 @@ public class Subnet : AzureResource
     public static new AzureResource FromJsonElement(JsonElement element)
     {
         Subnet resource = new Subnet();
+        resource.Description = element;
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();
@@ -33,11 +34,7 @@ public class Subnet : AzureResource
 
     public override List<string> GetReferences()
     {
-        List<string> refs = new List<string>();
-
-        // TODO: add reference to vnet
-
-        return refs;
+        return null;
     }
 
     public override string Emit()

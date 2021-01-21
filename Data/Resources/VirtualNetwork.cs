@@ -23,6 +23,7 @@ public class VirtualNetwork : AzureResource
     public static new AzureResource FromJsonElement(JsonElement element)
     {
         VirtualNetwork resource = new VirtualNetwork();
+        resource.Description = element;
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();
@@ -43,11 +44,7 @@ public class VirtualNetwork : AzureResource
 
     public override List<string> GetReferences()
     {
-        List<string> refs = new List<string>();
-
-        // TODO: find any references, just resource group?
-
-        return refs;
+        return null;
     }
 
     public override string Emit()

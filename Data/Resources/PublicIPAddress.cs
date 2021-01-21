@@ -18,6 +18,7 @@ public class PublicIPAddress : AzureResource
     public static new AzureResource FromJsonElement(JsonElement element)
     {
         PublicIPAddress resource = new PublicIPAddress();
+        resource.Description = element;
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();

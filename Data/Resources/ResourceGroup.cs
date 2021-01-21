@@ -14,14 +14,15 @@ public class ResourceGroup : AzureResource
 
     new public static AzureResource FromJsonElement(JsonElement element)
     {
-        ResourceGroup result = new ResourceGroup();
-        
-        result.ID = element.GetProperty("id").GetString();
-        result.Name = element.GetProperty("name").GetString();
-        result.Type = element.GetProperty("type").GetString();
-        result.Location = element.GetProperty("location").GetString();
+        ResourceGroup resource = new ResourceGroup();
+        resource.Description = element;
 
-        return result;
+        resource.ID = element.GetProperty("id").GetString();
+        resource.Name = element.GetProperty("name").GetString();
+        resource.Type = element.GetProperty("type").GetString();
+        resource.Location = element.GetProperty("location").GetString();
+
+        return resource;
     }
 
     public override List<string> GetReferences()

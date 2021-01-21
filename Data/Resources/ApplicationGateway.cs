@@ -14,6 +14,7 @@ public class ApplicationGateway : AzureResource
     public static new AzureResource FromJsonElement(JsonElement element)
     {
         ApplicationGateway resource = new ApplicationGateway();
+        resource.Description = element;
 
         // basic information
         resource.ID = element.GetProperty("id").GetString();
@@ -29,9 +30,7 @@ public class ApplicationGateway : AzureResource
     // return a list of resource IDs for other resources that this has some form of relation with
     public override List<string> GetReferences()
     {
-        List<string> refs = new List<string>();
-
-        return refs;
+        return null;
     }
 
     public override string Emit()
