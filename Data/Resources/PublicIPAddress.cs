@@ -72,7 +72,7 @@ public class PublicIPAddress : AzureResource
 
         builder.Append($"resource \"{TerraformType}\" \"{Name.Replace('-', '_')}\" {{\r\n");
         builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
-        builder.Append($"  location            = {Location}\r\n");
+        builder.Append($"  location            = \"{Location}\"\r\n");
         builder.Append($"\r\n");
         builder.Append($"  sku               = \"{SKU}\"\r\n");
         builder.Append($"  allocation_method = \"{AllocationMethod}\"\r\n");
