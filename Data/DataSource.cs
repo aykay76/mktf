@@ -22,7 +22,7 @@ public class DataSource
         builder.AppendLine($"data \"{ResourceType}\" \"{SourceName}\" {{");
         foreach (KeyValuePair<string, string> kvp in Attributes)
         {
-            builder.AppendLine($"{kvp.Key} = \"{kvp.Value}\"");
+            builder.AppendLine($"  {kvp.Key} = \"{kvp.Value}\"");
         }
         builder.AppendLine($"}}");
         builder.AppendLine();
