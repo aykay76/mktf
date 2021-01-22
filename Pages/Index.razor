@@ -1,49 +1,128 @@
-@page "/"
-@using System.Text.Json
-@using System.IO
+﻿@page "/"
 
-<h1>Hello, world!</h1>
+@using BlazorMonaco
+@using BlazorMonaco.Bridge
+@using System.Text
+@using Microsoft.Azure.Management.ResourceManager.Fluent
+@using blazorserver.Data
+@inject AzureService AzureService
+@inject GraphBuilderService GraphBuilderService
 
-Welcome to your new app.
+<h1>Azure Thing</h1>
+
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="subscriptionButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        @if (subscription == null)
+        {
+            <span>Choose a subscription</span>
+        }
+        else
+        {
+            @subscription.DisplayName
+        }
+    </button>
+    <div id="subscriptions" class="dropdown-menu" aria-labelledby="subscriptionButton">
+        @if (subscriptions != null)
+        {
+            @foreach (var sub in subscriptions)
+            {
+                <a class="dropdown-item" @onclick="@(()=>SubscriptionSelected(sub))">@sub.DisplayName</a>
+            }
+        }
+    </div>
+</div>
+@if (subscription != null)
+{
+    <div class="dropdown">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="resourceGroupButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            @if (resourceGroup == null)
+            {
+                <span>Choose a resource group</span>
+            }
+            else
+            {
+                @resourceGroup.Name
+            }
+        </button>
+        <div id="resourceGroups" class="dropdown-menu" aria-labelledby="resourceGroupButton">
+            @if (resourceGroups != null)
+            {
+                @foreach (var rg in resourceGroups)
+                {
+                    <a class="dropdown-item" @onclick="@(()=>ResourceGroupSelected(rg as ResourceGroup))">@rg.Name</a>
+                }
+            }
+        </div>
+    </div>
+}
+
+<MonacoEditor Id="any-id-string" ConstructionOptions="EditorConstructionOptions" CssClass="my-monaco-editor" />
 
 @code {
-    private string result = string.Empty;
+    private List<AzureSubscription> subscriptions = null;
+    private List<AzureResource> resourceGroups = null;
+    private AzureSubscription subscription = null;
+    private ResourceGroup resourceGroup = null;
+    private MonacoEditor _editor = null;
 
     protected override async Task OnInitializedAsync()
     {
-        using (HttpClient client = new HttpClient())
+        subscriptions = await AzureService.GetSubscriptions();
+    }
+
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)
+    {
+        _editor = editor;
+
+        return new StandaloneEditorConstructionOptions
         {
-            string clientId = System.Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
-            string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
-            string subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
-            string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
+            AutomaticLayout = true,
+            Language = "json"
+        };
+    }
 
-            Dictionary<string, string> body = new Dictionary<string, string>() {
-                { "grant_type", "client_credentials" },
-                { "resource", "https://management.azure.com" },
-                { "client_id", clientId },
-                { "client_secret", clientSecret }
-            };
-            
-            var response = await client.PostAsync($"https://login.microsoftonline.com/{tenantId}/oauth2/token", new FormUrlEncodedContent(body));
-            result = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(result);
-            JsonDocument doc = JsonDocument.Parse(result);
-            string accessToken = doc.RootElement.GetProperty("access_token").GetString();
+    private async Task EditorOnDidInit(MonacoEditorBase editor)
+    {
+        await editor.Layout();
+        await MonacoEditorBase.SetTheme("vs-dark");
+    }
 
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
-            var resources = await client.GetAsync($"https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups?api-version=2020-06-01");
-            result = await resources.Content.ReadAsStringAsync();
+    private async Task SubscriptionSelected(AzureSubscription chosenSubscription)
+    {
+        subscription = chosenSubscription;
 
-            string filename = $"../Microsoft.Network_virtualNetworks_subnets.json";
-            if (File.Exists(filename) == false)
-            {
-                File.WriteAllText(filename, result);
-            }
+        resourceGroups = await AzureService.GetResourceGroups(subscription);
+    }
 
-            doc = JsonDocument.Parse(result);
-            StateHasChanged();
+    private async Task ResourceGroupSelected(ResourceGroup chosenResourceGroup)
+    {
+        resourceGroup = chosenResourceGroup;
+
+        // first, populate the nodes of the graph with generic resources
+        // the graph builder will get more detailed resource objects as required
+        // finally the code emitter will output code that represents the graph
+        List<AzureResource> resources = await AzureService.GetResources(resourceGroup);
+
+        var graph = await GraphBuilderService.BuildGraph(resourceGroup, resources);
+        
+        StringBuilder scriptBuilder = new StringBuilder();
+        
+        // obviously this needs to be replaced with a better code emitter
+        foreach (var node in graph.Nodes)
+        {
+            scriptBuilder.Append(node.Value.Emit());
         }
+
+        // also output any external references
+        foreach (var node in graph.Nodes)
+        {
+            var refs = node.Value.ExternalReferences;
+            foreach (DataSource data in refs)
+            {
+                scriptBuilder.Append(data.Emit());
+            }
+        }
+
+        await _editor.SetValue(scriptBuilder.ToString());
     }
 }
-
