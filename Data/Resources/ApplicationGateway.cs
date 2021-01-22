@@ -59,10 +59,6 @@ public class ApplicationGateway : AzureResource
             {
                 string[] parts = subnetId.Substring(1).Split('/');
 
-                // in a different resource group so I assume a data object will be needed
-                // somehow i need to get a data object into the graph
-                // data "resource_type" "name"{ attr=value...}
-                // my reference to it will then be "data.resource_type.name.field"
                 resource.GatewayIPConfigurations[name] = $"data.{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
 
                 DataSource source = new DataSource();

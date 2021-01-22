@@ -14,10 +14,12 @@ public class NetworkSecurityGroup : AzureResource
     public static string TerraformType = "azurerm_network_security_group";
 
     public List<string> Subnets { get; set; }
+    public List<NetworkSecurityRule> Rules { get; set; }
 
     public NetworkSecurityGroup()
     {
         Subnets = new List<string>();
+        Rules = new List<NetworkSecurityRule>();
     }
 
     public static new AzureResource FromJsonElement(JsonElement element)
@@ -31,16 +33,26 @@ public class NetworkSecurityGroup : AzureResource
         resource.Type = element.GetProperty("type").GetString();
         resource.Location = element.GetProperty("location").GetString();
 
-        // TODO: process the securityRules property
-
         JsonElement properties = element.GetProperty("properties");
-        ArrayEnumerator subnetEnum = properties.GetProperty("subnets").EnumerateArray();
-        while (subnetEnum.MoveNext())
+
+        ArrayEnumerator e = properties.GetProperty("securityRules").EnumerateArray();
+        while (e.MoveNext())
         {
-            string subnetId = subnetEnum.Current.GetProperty("id").GetString();
-            // I only want the name, strip the rest
-            string[] parts = subnetId.Split('/');
-            resource.Subnets.Add(parts[parts.Length - 1]);
+            NetworkSecurityRule rule = NetworkSecurityRule.FromJsonElement(e.Current) as NetworkSecurityRule;
+            resource.Rules.Add(rule);
+        }
+
+        JsonElement subnets;
+        if (properties.TryGetProperty("subnets", out subnets))
+        {
+            ArrayEnumerator subnetEnum = subnets.EnumerateArray();
+            while (subnetEnum.MoveNext())
+            {
+                string subnetId = subnetEnum.Current.GetProperty("id").GetString();
+                // I only want the name, strip the rest
+                string[] parts = subnetId.Split('/');
+                resource.Subnets.Add(parts[parts.Length - 1]);
+            }
         }
 
         return resource;
@@ -50,12 +62,18 @@ public class NetworkSecurityGroup : AzureResource
     {
         StringBuilder builder = new StringBuilder();
 
-        builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
-        builder.Append($"  resource_group_name  = \"{ResourceGroupName}\"\r\n");
-        builder.Append($"  location             = \"{Location}\"\r\n");
-        builder.Append("\r\n");
-        builder.Append($"  name = \"{Name}\"\r\n");
-        builder.Append($"}}\r\n");
+        builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
+        builder.AppendLine($"  resource_group_name  = \"{ResourceGroupName}\"");
+        builder.AppendLine($"  location             = \"{Location}\"");
+        builder.AppendLine();
+        builder.AppendLine($"  name = \"{Name}\"");
+
+        foreach (NetworkSecurityRule rule in Rules)
+        {
+            builder.Append(rule.Emit());
+        }
+
+        builder.AppendLine($"}}");
 
         return builder.ToString();
     }
