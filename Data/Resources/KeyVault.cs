@@ -35,9 +35,32 @@ public class KeyVault : AzureResource
         resource.TenantID = properties.GetProperty("tenantId").GetString();
         resource.SKU = properties.GetProperty("sku").GetProperty("name").GetString();
         resource.EnabledForDeployment = properties.GetProperty("enabledForDeployment").GetBoolean();
-        resource.EnabledForDiskEncryption = properties.GetProperty("enabledForDiskEncryption").GetBoolean();
-        resource.EnabledForTemplateDeployment = properties.GetProperty("enabledForTemplateDeployment").GetBoolean();
-        resource.EnableRBACAuthorisation = properties.GetProperty("enableRbacAuthorization").GetBoolean();
+        try
+        {
+            resource.EnabledForDiskEncryption = properties.GetProperty("enabledForDiskEncryption").GetBoolean();
+        }
+        catch
+        {
+
+        }
+
+        try
+        {
+            resource.EnabledForTemplateDeployment = properties.GetProperty("enabledForTemplateDeployment").GetBoolean();
+        }
+        catch
+        {
+
+        }
+
+        try
+        {
+            resource.EnableRBACAuthorisation = properties.GetProperty("enableRbacAuthorization").GetBoolean();
+        }
+        catch
+        {
+
+        }
 
         return resource;
     }
