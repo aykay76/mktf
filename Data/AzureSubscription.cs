@@ -12,7 +12,7 @@ namespace blazorserver.Data
         {
             AzureSubscription result = new AzureSubscription();
             
-            result.ID = element.GetProperty("id").GetString();
+            result.ID = element.GetProperty("id").GetString().Replace("/subscriptions/", "");
             result.DisplayName = element.GetProperty("displayName").GetString();
 
             return result;
