@@ -34,7 +34,7 @@ namespace blazorserver.Data
                 {
                     string clientId = System.Environment.GetEnvironmentVariable("AZURE_CLIENT_ID");
                     string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
-                    subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
+                    // subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID");
                     string tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
 
                     Dictionary<string, string> body = new Dictionary<string, string>() {
@@ -97,6 +97,8 @@ namespace blazorserver.Data
 
         public async Task<List<AzureResource>> GetResourceGroups(AzureSubscription subscription)
         {
+            subscriptionId = subscription.ID;
+
             try
             {
                 List<AzureResource> resourceGroups = new List<AzureResource>();
