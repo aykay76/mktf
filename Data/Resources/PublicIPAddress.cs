@@ -33,51 +33,19 @@ public class PublicIPAddress : AzureResource
         return resource;
     }
 
-    public override List<string> GetReferences()
-    {
-        List<string> refs = new List<string>();
-
-        // if (Inner.HasAssignedLoadBalancer)
-        // {
-        //     // oddity - public IP attached to application gateway shows it has a load balancer, but it's null
-        //     try
-        //     {
-        //         ILoadBalancerPublicFrontend fe = Inner.GetAssignedLoadBalancerFrontend();
-        //         ILoadBalancer lb = fe.Parent;
-
-        //         // got the load balancer name (lb.Name) - check the other resources and make a link
-
-        //         // return reference to load balancer from graph
-        //         // TODO: add method FindByResourceType and return the node that matches
-        //         // graph.Nodes.FindByValue();
-        //         Console.WriteLine(lb.Name);
-        //     }
-        //     catch
-        //     {
-                
-        //     }
-        // }
-        // if (Inner.HasAssignedNetworkInterface)
-        // {
-        //     INicIPConfiguration ipconfig = Inner.GetAssignedNetworkInterfaceIPConfiguration();
-        //     Console.WriteLine(ipconfig.Name);
-        // }
-
-        return refs;
-    }
-
     public override string Emit()
     {
         StringBuilder builder = new StringBuilder();
 
-        builder.Append($"resource \"{TerraformType}\" \"{Name.Replace('-', '_')}\" {{\r\n");
-        builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
-        builder.Append($"  location            = \"{Location}\"\r\n");
-        builder.Append($"\r\n");
-        builder.Append($"  sku               = \"{SKU}\"\r\n");
-        builder.Append($"  allocation_method = \"{AllocationMethod}\"\r\n");
-        builder.Append($"}}\r\n");
-        builder.Append("\r\n");
+        builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
+        builder.AppendLine($"  name                = \"{Name}\"");
+        builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
+        builder.AppendLine($"  location            = \"{Location}\"");
+        builder.AppendLine();
+        builder.AppendLine($"  sku               = \"{SKU}\"");
+        builder.AppendLine($"  allocation_method = \"{AllocationMethod}\"");
+        builder.AppendLine($"}}");
+        builder.AppendLine();
 
         return builder.ToString();
     }

@@ -32,18 +32,13 @@ public class Subnet : AzureResource
         return resource;
     }
 
-    public override List<string> GetReferences()
-    {
-        return null;
-    }
-
     public override string Emit()
     {
         StringBuilder builder = new StringBuilder();
 
         builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
         builder.Append($"  resource_group_name  = \"{ResourceGroupName}\"\r\n");
-        builder.Append($"  virtual_network_name = azurerm_virtual_network.{TerraformNameFromResourceName(VirtualNetworkName)}.name\r\n");
+        builder.Append($"  virtual_network_name = {VirtualNetwork.TerraformType}.{TerraformNameFromResourceName(VirtualNetworkName)}.name\r\n");
         builder.Append("\r\n");
         builder.Append($"  name             = \"{Name}\"\r\n");
         builder.Append($"  address_prefixes = [\"{AddressPrefix}\"]\r\n");

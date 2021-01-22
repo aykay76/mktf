@@ -129,7 +129,9 @@ namespace blazorserver.Data
                 var e = result.RootElement.GetProperty("value").EnumerateArray();
                 while (e.MoveNext())
                 {
-                    resources.Add(AzureResource.FromJsonElement(e.Current));
+                    AzureResource stub = AzureResource.FromJsonElement(e.Current);
+                    stub.ResourceGroupName = resourceGroup.Name;
+                    resources.Add(stub);
                 }
 
                 return resources;
@@ -170,6 +172,7 @@ namespace blazorserver.Data
                         if (method != null)
                         {
                             resource = (AzureResource)method.Invoke(null, new object[] {result.RootElement});
+                            resource.ResourceGroupName = stub.ResourceGroupName;
                             resources.Add(resource);
                         }
 

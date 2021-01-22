@@ -44,11 +44,6 @@ public class DnsZoneA : AzureResource
         return resource;
     }
 
-    public override List<string> GetReferences()
-    {
-        return null;
-    }
-
     public override string Emit()
     {
         StringBuilder builder = new StringBuilder();

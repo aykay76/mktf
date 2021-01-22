@@ -28,24 +28,15 @@ public class ContainerGroup : AzureResource
         return resource;
     }
 
-    public override List<string> GetReferences()
-    {
-        List<string> refs = new List<string>();
-
-        // TODO: find any external references - maybe network profile or image server (ACR)
-
-        return refs;
-    }
-
     public override string Emit()
     {
         StringBuilder builder = new StringBuilder();
 
-        builder.Append($"resource \"{TerraformType}\" \"{Name.Replace('-', '_')}\" {{\r\n");
-        builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
-        builder.Append($"  location            = {Location}\r\n");
-        builder.Append($"}}\r\n");
-        builder.Append("\r\n");
+        builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
+        builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
+        builder.AppendLine($"  location            = \"{Location}\"");
+        builder.AppendLine($"}}");
+        builder.AppendLine("");
 
         return builder.ToString();
     }

@@ -16,15 +16,6 @@ public class SubnetNetworkSecurityGroupAssociation : AzureResource
     public string SubnetName { get; set; }
     public string NetworkSecurityGroupName { get; set; }
 
-    public override List<string> GetReferences()
-    {
-        List<string> refs = new List<string>();
-
-        // TODO: add reference to vnet
-
-        return refs;
-    }
-
     public override string Emit()
     {
         StringBuilder builder = new StringBuilder();

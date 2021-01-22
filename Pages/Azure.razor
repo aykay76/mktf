@@ -113,6 +113,16 @@
             scriptBuilder.Append(node.Value.Emit());
         }
 
+        // also output any external references
+        foreach (var node in graph.Nodes)
+        {
+            var refs = node.Value.ExternalReferences;
+            foreach (DataSource data in refs)
+            {
+                scriptBuilder.Append(data.Emit());
+            }
+        }
+
         await _editor.SetValue(scriptBuilder.ToString());
     }
 }

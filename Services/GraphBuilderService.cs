@@ -45,17 +45,6 @@ public class GraphBuilderService
             }
         }
 
-        // // iterate through the nodes, looking for relationships
-        // List<string> refs = null;
-        // foreach (var node in graph.Nodes)
-        // {
-        //     refs = node.Value.GetReferences();
-        //     if (refs != null)
-        //     {
-        //         AddEdgesForRefs(graph, refs, node);
-        //     }
-        // }
-
         return graph;
     }
 
