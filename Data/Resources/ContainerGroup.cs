@@ -6,38 +6,41 @@ using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
-public class ContainerGroup : AzureResource
+namespace blazorserver.Data.Resources
 {
-    public static string AzureType = "Microsoft.ContainerInstance/containerGroups";
-    public static string ApiVersion = "2019-12-01";
-    public static string TerraformType = "azurerm_container_group";
-
-    public static new AzureResource FromJsonElement(JsonElement element)
+    public class ContainerGroup : AzureResource
     {
-        ContainerGroup resource = new ContainerGroup();
-        resource.Description = element;
+        public static string AzureType = "Microsoft.ContainerInstance/containerGroups";
+        public static string ApiVersion = "2019-12-01";
+        public static string TerraformType = "azurerm_container_group";
 
-        // basic information
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
-        resource.Location = element.GetProperty("location").GetString();
+        public static new AzureResource FromJsonElement(JsonElement element)
+        {
+            ContainerGroup resource = new ContainerGroup();
+            resource.Description = element;
 
-        // TODO: resource specific information
+            // basic information
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
+            resource.Location = element.GetProperty("location").GetString();
 
-        return resource;
-    }
+            // TODO: resource specific information
 
-    public override string Emit()
-    {
-        StringBuilder builder = new StringBuilder();
+            return resource;
+        }
 
-        builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
-        builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
-        builder.AppendLine($"  location            = \"{Location}\"");
-        builder.AppendLine($"}}");
-        builder.AppendLine("");
+        public override string Emit()
+        {
+            StringBuilder builder = new StringBuilder();
 
-        return builder.ToString();
+            builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
+            builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
+            builder.AppendLine($"  location            = \"{Location}\"");
+            builder.AppendLine($"}}");
+            builder.AppendLine("");
+
+            return builder.ToString();
+        }
     }
 }

@@ -15,57 +15,60 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 // The basic information in this class comes from a simple list of resources, stub information to then be able to get more
 // https://docs.microsoft.com/en-us/rest/api/resources/resources/listbyresourcegroup
 
-public class AzureResource
+namespace blazorserver.Data.Resources
 {
-    public Dictionary<string, string> Variables { get; set; }
-    public JsonElement Description { get; set; }
-    public string ID { get; set; }
-    public string Name { get; set; }
-    public string Type { get; set; }
-    public string Location { get; set; }
-    public string ResourceGroupName { get; set; }
-    public List<DataSource> ExternalReferences { get; set; }
-    
-    public AzureResource()
+    public class AzureResource
     {
-        Variables = new Dictionary<string, string>();
-        ExternalReferences = new List<DataSource>();
-    }
+        public Dictionary<string, string> Variables { get; set; }
+        public JsonElement Description { get; set; }
+        public string ID { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string Location { get; set; }
+        public string ResourceGroupName { get; set; }
+        public List<DataSource> ExternalReferences { get; set; }
 
-    public static AzureResource FromJsonElement(JsonElement element)
-    {
-        AzureResource resource = new AzureResource();
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
-        resource.Location = element.GetProperty("location").GetString();
-        return resource;
-    }
-
-    public static string TerraformNameFromResourceName(string resourceName)
-    {
-        return resourceName.Replace('-', '_').Replace('.', '_');
-    }
-
-    protected static bool ResourceInResourceGroup(string id, string resourceGroupName)
-    {
-        string[] parts = id.Substring(1).Split('/');
-        for (int i = 0; i < parts.Length; i++)
+        public AzureResource()
         {
-            if (parts[i] == "resourceGroups" && string.Compare(resourceGroupName, parts[i + 1], true) == 0) return true;
+            Variables = new Dictionary<string, string>();
+            ExternalReferences = new List<DataSource>();
         }
 
-        return false;
-    }
+        public static AzureResource FromJsonElement(JsonElement element)
+        {
+            AzureResource resource = new AzureResource();
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
+            resource.Location = element.GetProperty("location").GetString();
+            return resource;
+        }
 
-    protected static string ExtractSubnetName(string resourceId)
-    {
-        string[] parts = resourceId.Substring(1).Split('/');
-        return parts[9];
-    }
+        public static string TerraformNameFromResourceName(string resourceName)
+        {
+            return resourceName.Replace('-', '_').Replace('.', '_');
+        }
 
-    public virtual string Emit()
-    {
-        return $"# Unhandled resource: {ID}, {Name}, {Type}, {Location}\r\n";
+        protected static bool ResourceInResourceGroup(string id, string resourceGroupName)
+        {
+            string[] parts = id.Substring(1).Split('/');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (parts[i] == "resourceGroups" && string.Compare(resourceGroupName, parts[i + 1], true) == 0) return true;
+            }
+
+            return false;
+        }
+
+        protected static string ExtractSubnetName(string resourceId)
+        {
+            string[] parts = resourceId.Substring(1).Split('/');
+            return parts[9];
+        }
+
+        public virtual string Emit()
+        {
+            return $"# Unhandled resource: {ID}, {Name}, {Type}, {Location}\r\n";
+        }
     }
 }

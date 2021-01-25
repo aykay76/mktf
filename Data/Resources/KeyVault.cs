@@ -7,83 +7,86 @@ using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 // https://docs.microsoft.com/en-us/rest/api/keyvault/vaults/get
-public class KeyVault : AzureResource
+namespace blazorserver.Data.Resources
 {
-    public static string AzureType = "Microsoft.KeyVault/vaults";
-    public static string ApiVersion = "2019-09-01";
-    public static string TerraformType = "azurerm_key_vault";
-
-    public string TenantID { get; set; }
-    public string SKU { get; set; }
-    public bool EnabledForDeployment { get; set; }
-    public bool EnabledForDiskEncryption { get; set; }
-    public bool EnabledForTemplateDeployment { get; set; }
-    public bool EnableRBACAuthorisation { get; set; }
-
-    public static new AzureResource FromJsonElement(JsonElement element)
+    public class KeyVault : AzureResource
     {
-        KeyVault resource = new KeyVault();
-        resource.Description = element;
+        public static string AzureType = "Microsoft.KeyVault/vaults";
+        public static string ApiVersion = "2019-09-01";
+        public static string TerraformType = "azurerm_key_vault";
 
-        // basic information
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
-        resource.Location = element.GetProperty("location").GetString();
+        public string TenantID { get; set; }
+        public string SKU { get; set; }
+        public bool EnabledForDeployment { get; set; }
+        public bool EnabledForDiskEncryption { get; set; }
+        public bool EnabledForTemplateDeployment { get; set; }
+        public bool EnableRBACAuthorisation { get; set; }
 
-        JsonElement properties = element.GetProperty("properties");
-        resource.TenantID = properties.GetProperty("tenantId").GetString();
-        resource.SKU = properties.GetProperty("sku").GetProperty("name").GetString();
-        resource.EnabledForDeployment = properties.GetProperty("enabledForDeployment").GetBoolean();
-        try
+        public static new AzureResource FromJsonElement(JsonElement element)
         {
-            resource.EnabledForDiskEncryption = properties.GetProperty("enabledForDiskEncryption").GetBoolean();
+            KeyVault resource = new KeyVault();
+            resource.Description = element;
+
+            // basic information
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
+            resource.Location = element.GetProperty("location").GetString();
+
+            JsonElement properties = element.GetProperty("properties");
+            resource.TenantID = properties.GetProperty("tenantId").GetString();
+            resource.SKU = properties.GetProperty("sku").GetProperty("name").GetString();
+            resource.EnabledForDeployment = properties.GetProperty("enabledForDeployment").GetBoolean();
+            try
+            {
+                resource.EnabledForDiskEncryption = properties.GetProperty("enabledForDiskEncryption").GetBoolean();
+            }
+            catch
+            {
+
+            }
+
+            try
+            {
+                resource.EnabledForTemplateDeployment = properties.GetProperty("enabledForTemplateDeployment").GetBoolean();
+            }
+            catch
+            {
+
+            }
+
+            try
+            {
+                resource.EnableRBACAuthorisation = properties.GetProperty("enableRbacAuthorization").GetBoolean();
+            }
+            catch
+            {
+
+            }
+
+            return resource;
         }
-        catch
+
+        public override string Emit()
         {
+            StringBuilder builder = new StringBuilder();
 
+            builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
+            builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
+            builder.AppendLine($"  location            = \"{Location}\"");
+            builder.AppendLine();
+            builder.AppendLine($"  name      = \"{Name}\"");
+            builder.AppendLine($"  sku_name  = \"{SKU}\"");
+            builder.AppendLine($"  tenant_id = \"{TenantID}\"");
+            builder.AppendLine();
+            builder.AppendLine($"  enabled_for_deployment = {EnabledForDeployment}");
+            builder.AppendLine($"  enabled_for_disk_encryption = {EnabledForDiskEncryption}");
+            builder.AppendLine($"  enabled_for_template_deployment = {EnabledForTemplateDeployment}");
+            builder.AppendLine($"  enable_rbac_authorization = {EnableRBACAuthorisation}");
+            builder.AppendLine($"}}");
+            builder.AppendLine();
+
+            return builder.ToString();
         }
-
-        try
-        {
-            resource.EnabledForTemplateDeployment = properties.GetProperty("enabledForTemplateDeployment").GetBoolean();
-        }
-        catch
-        {
-
-        }
-
-        try
-        {
-            resource.EnableRBACAuthorisation = properties.GetProperty("enableRbacAuthorization").GetBoolean();
-        }
-        catch
-        {
-
-        }
-
-        return resource;
-    }
-
-    public override string Emit()
-    {
-        StringBuilder builder = new StringBuilder();
-
-        builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
-        builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
-        builder.AppendLine($"  location            = \"{Location}\"");
-        builder.AppendLine();
-        builder.AppendLine($"  name      = \"{Name}\"");
-        builder.AppendLine($"  sku_name  = \"{SKU}\"");
-        builder.AppendLine($"  tenant_id = \"{TenantID}\"");
-        builder.AppendLine();
-        builder.AppendLine($"  enabled_for_deployment = {EnabledForDeployment}");
-        builder.AppendLine($"  enabled_for_disk_encryption = {EnabledForDiskEncryption}");
-        builder.AppendLine($"  enabled_for_template_deployment = {EnabledForTemplateDeployment}");
-        builder.AppendLine($"  enable_rbac_authorization = {EnableRBACAuthorisation}");
-        builder.AppendLine($"}}");
-        builder.AppendLine();
-
-        return builder.ToString();
     }
 }

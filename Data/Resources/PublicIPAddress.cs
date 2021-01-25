@@ -5,48 +5,51 @@ using System.Text.Json;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
-public class PublicIPAddress : AzureResource
+namespace blazorserver.Data.Resources
 {
-    public static string AzureType = "Microsoft.Network/publicIPAddresses";
-    public static string ApiVersion = "2020-07-01";
-    public static string TerraformType = "azurerm_public_ip";
-
-    // additional fields for output to TF
-    public string SKU { get; set; }
-    public string AllocationMethod { get; set; }
-
-    public static new AzureResource FromJsonElement(JsonElement element)
+    public class PublicIPAddress : AzureResource
     {
-        PublicIPAddress resource = new PublicIPAddress();
-        resource.Description = element;
+        public static string AzureType = "Microsoft.Network/publicIPAddresses";
+        public static string ApiVersion = "2020-07-01";
+        public static string TerraformType = "azurerm_public_ip";
 
-        // basic information
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
-        resource.Location = element.GetProperty("location").GetString();
+        // additional fields for output to TF
+        public string SKU { get; set; }
+        public string AllocationMethod { get; set; }
 
-        // resource specific information
-        resource.AllocationMethod = element.GetProperty("properties").GetProperty("publicIPAllocationMethod").GetString();
-        resource.SKU = element.GetProperty("sku").GetProperty("name").GetString();
+        public static new AzureResource FromJsonElement(JsonElement element)
+        {
+            PublicIPAddress resource = new PublicIPAddress();
+            resource.Description = element;
 
-        return resource;
-    }
+            // basic information
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
+            resource.Location = element.GetProperty("location").GetString();
 
-    public override string Emit()
-    {
-        StringBuilder builder = new StringBuilder();
+            // resource specific information
+            resource.AllocationMethod = element.GetProperty("properties").GetProperty("publicIPAllocationMethod").GetString();
+            resource.SKU = element.GetProperty("sku").GetProperty("name").GetString();
 
-        builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
-        builder.AppendLine($"  name                = \"{Name}\"");
-        builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
-        builder.AppendLine($"  location            = \"{Location}\"");
-        builder.AppendLine();
-        builder.AppendLine($"  sku               = \"{SKU}\"");
-        builder.AppendLine($"  allocation_method = \"{AllocationMethod}\"");
-        builder.AppendLine($"}}");
-        builder.AppendLine();
+            return resource;
+        }
 
-        return builder.ToString();
+        public override string Emit()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.AppendLine($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{");
+            builder.AppendLine($"  name                = \"{Name}\"");
+            builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
+            builder.AppendLine($"  location            = \"{Location}\"");
+            builder.AppendLine();
+            builder.AppendLine($"  sku               = \"{SKU}\"");
+            builder.AppendLine($"  allocation_method = \"{AllocationMethod}\"");
+            builder.AppendLine($"}}");
+            builder.AppendLine();
+
+            return builder.ToString();
+        }
     }
 }

@@ -7,68 +7,71 @@ using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using static System.Text.Json.JsonElement;
 
-public class VirtualNetwork : AzureResource
+namespace blazorserver.Data.Resources
 {
-    public static string AzureType = "Microsoft.Network/virtualNetworks";
-    public static string ApiVersion = "2020-07-01";
-    public static string TerraformType = "azurerm_virtual_network";
-
-    public List<string> AddressPrefixes { get; set; }
-
-    public VirtualNetwork()
+    public class VirtualNetwork : AzureResource
     {
-        AddressPrefixes = new List<string>();
-    }
+        public static string AzureType = "Microsoft.Network/virtualNetworks";
+        public static string ApiVersion = "2020-07-01";
+        public static string TerraformType = "azurerm_virtual_network";
 
-    public static new AzureResource FromJsonElement(JsonElement element)
-    {
-        VirtualNetwork resource = new VirtualNetwork();
-        resource.Description = element;
+        public List<string> AddressPrefixes { get; set; }
 
-        // basic information
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
-        resource.Location = element.GetProperty("location").GetString();
-
-        // collect resource specific information
-        JsonElement properties = element.GetProperty("properties");
-        ArrayEnumerator addressPrefixes = properties.GetProperty("addressSpace").GetProperty("addressPrefixes").EnumerateArray();
-        while (addressPrefixes.MoveNext())
+        public VirtualNetwork()
         {
-            resource.AddressPrefixes.Add(addressPrefixes.Current.GetString());
+            AddressPrefixes = new List<string>();
         }
 
-        return resource;
-    }
-
-    public override string Emit()
-    {
-        StringBuilder builder = new StringBuilder();
-
-        builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
-        builder.Append($"  resource_group_name = \"{ResourceGroupName}\"\r\n");
-        builder.Append($"  location            = \"{Location}\"\r\n");
-
-        builder.Append($"  address_space = [");
-        bool first = true;
-        foreach (string addressPrefix in AddressPrefixes)
+        public static new AzureResource FromJsonElement(JsonElement element)
         {
-            if (first)
+            VirtualNetwork resource = new VirtualNetwork();
+            resource.Description = element;
+
+            // basic information
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
+            resource.Location = element.GetProperty("location").GetString();
+
+            // collect resource specific information
+            JsonElement properties = element.GetProperty("properties");
+            ArrayEnumerator addressPrefixes = properties.GetProperty("addressSpace").GetProperty("addressPrefixes").EnumerateArray();
+            while (addressPrefixes.MoveNext())
             {
-                first = false;
+                resource.AddressPrefixes.Add(addressPrefixes.Current.GetString());
             }
-            else
-            {
-                builder.Append(",");
-            }
-            builder.Append($"\"{addressPrefix}\"");
+
+            return resource;
         }
-        builder.Append("]\r\n");
 
-        builder.Append($"}}\r\n");
-        builder.Append("\r\n");
+        public override string Emit()
+        {
+            StringBuilder builder = new StringBuilder();
 
-        return builder.ToString();
+            builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
+            builder.Append($"  resource_group_name = \"{ResourceGroupName}\"\r\n");
+            builder.Append($"  location            = \"{Location}\"\r\n");
+
+            builder.Append($"  address_space = [");
+            bool first = true;
+            foreach (string addressPrefix in AddressPrefixes)
+            {
+                if (first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    builder.Append(",");
+                }
+                builder.Append($"\"{addressPrefix}\"");
+            }
+            builder.Append("]\r\n");
+
+            builder.Append($"}}\r\n");
+            builder.Append("\r\n");
+
+            return builder.ToString();
+        }
     }
 }

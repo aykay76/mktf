@@ -6,25 +6,28 @@ using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
-public class SubnetNetworkSecurityGroupAssociation : AzureResource
+namespace blazorserver.Data.Resources
 {
-    // This is not a real thing in Azure, just a holder for a terraform resource
-    // public static string AzureType = "Microsoft.Network/virtualNetworks/subnetAssociation";
-    // public static string ApiVersion = "2020-07-01";
-    public static string TerraformType = "azurerm_subnet_network_security_group_association";
-
-    public string SubnetName { get; set; }
-    public string NetworkSecurityGroupName { get; set; }
-
-    public override string Emit()
+    public class SubnetNetworkSecurityGroupAssociation : AzureResource
     {
-        StringBuilder builder = new StringBuilder();
+        // This is not a real thing in Azure, just a holder for a terraform resource
+        // public static string AzureType = "Microsoft.Network/virtualNetworks/subnetAssociation";
+        // public static string ApiVersion = "2020-07-01";
+        public static string TerraformType = "azurerm_subnet_network_security_group_association";
 
-        builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(SubnetName)}_{TerraformNameFromResourceName(NetworkSecurityGroupName)}\" {{\r\n");
-        builder.Append($"  subnet_id                 = {Subnet.TerraformType}.{TerraformNameFromResourceName(SubnetName)}.id\r\n");
-        builder.Append($"  network_security_group_id = {NetworkSecurityGroup.TerraformType}.{TerraformNameFromResourceName(NetworkSecurityGroupName)}.id\r\n");
-        builder.Append($"}}\r\n");
+        public string SubnetName { get; set; }
+        public string NetworkSecurityGroupName { get; set; }
 
-        return builder.ToString();
+        public override string Emit()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(SubnetName)}_{TerraformNameFromResourceName(NetworkSecurityGroupName)}\" {{\r\n");
+            builder.Append($"  subnet_id                 = {Subnet.TerraformType}.{TerraformNameFromResourceName(SubnetName)}.id\r\n");
+            builder.Append($"  network_security_group_id = {NetworkSecurityGroup.TerraformType}.{TerraformNameFromResourceName(NetworkSecurityGroupName)}.id\r\n");
+            builder.Append($"}}\r\n");
+
+            return builder.ToString();
+        }
     }
 }

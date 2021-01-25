@@ -6,35 +6,38 @@ using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
-public class DnsZone : AzureResource
+namespace blazorserver.Data.Resources
 {
-    public static string AzureType = "Microsoft.Network/dnszones";
-    public static string ApiVersion = "2018-05-01";
-    public static string TerraformType = "azurerm_dns_zone";
-
-    public static new AzureResource FromJsonElement(JsonElement element)
+    public class DnsZone : AzureResource
     {
-        DnsZone resource = new DnsZone();
-        resource.Description = element;
+        public static string AzureType = "Microsoft.Network/dnszones";
+        public static string ApiVersion = "2018-05-01";
+        public static string TerraformType = "azurerm_dns_zone";
 
-        // basic information
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
+        public static new AzureResource FromJsonElement(JsonElement element)
+        {
+            DnsZone resource = new DnsZone();
+            resource.Description = element;
 
-        return resource;
-    }
+            // basic information
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
 
-    public override string Emit()
-    {
-        StringBuilder builder = new StringBuilder();
+            return resource;
+        }
 
-        builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
-        builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
-        builder.Append($"  name                = {Name}\r\n");
-        builder.Append($"}}\r\n");
-        builder.Append("\r\n");
+        public override string Emit()
+        {
+            StringBuilder builder = new StringBuilder();
 
-        return builder.ToString();
+            builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
+            builder.Append($"  resource_group_name = {ResourceGroupName}\r\n");
+            builder.Append($"  name                = {Name}\r\n");
+            builder.Append($"}}\r\n");
+            builder.Append("\r\n");
+
+            return builder.ToString();
+        }
     }
 }

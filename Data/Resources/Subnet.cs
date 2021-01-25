@@ -6,44 +6,47 @@ using Microsoft.Azure.Management.ContainerInstance.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
-public class Subnet : AzureResource
+namespace blazorserver.Data.Resources
 {
-    public static string AzureType = "Microsoft.Network/virtualNetworks/subnets";
-    public static string ApiVersion = "2020-07-01";
-    public static string TerraformType = "azurerm_subnet";
-
-    public string VirtualNetworkName { get; set; }
-    public string AddressPrefix { get; set; }
-
-    public static new AzureResource FromJsonElement(JsonElement element)
+    public class Subnet : AzureResource
     {
-        Subnet resource = new Subnet();
-        resource.Description = element;
+        public static string AzureType = "Microsoft.Network/virtualNetworks/subnets";
+        public static string ApiVersion = "2020-07-01";
+        public static string TerraformType = "azurerm_subnet";
 
-        // basic information
-        resource.ID = element.GetProperty("id").GetString();
-        resource.Name = element.GetProperty("name").GetString();
-        resource.Type = element.GetProperty("type").GetString();
+        public string VirtualNetworkName { get; set; }
+        public string AddressPrefix { get; set; }
 
-        // TODO: resource specific information
-        // VirtualNetworkName is not known here, will be set by caller on return
-        resource.AddressPrefix = element.GetProperty("properties").GetProperty("addressPrefix").GetString();
+        public static new AzureResource FromJsonElement(JsonElement element)
+        {
+            Subnet resource = new Subnet();
+            resource.Description = element;
 
-        return resource;
-    }
+            // basic information
+            resource.ID = element.GetProperty("id").GetString();
+            resource.Name = element.GetProperty("name").GetString();
+            resource.Type = element.GetProperty("type").GetString();
 
-    public override string Emit()
-    {
-        StringBuilder builder = new StringBuilder();
+            // TODO: resource specific information
+            // VirtualNetworkName is not known here, will be set by caller on return
+            resource.AddressPrefix = element.GetProperty("properties").GetProperty("addressPrefix").GetString();
 
-        builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
-        builder.Append($"  resource_group_name  = \"{ResourceGroupName}\"\r\n");
-        builder.Append($"  virtual_network_name = {VirtualNetwork.TerraformType}.{TerraformNameFromResourceName(VirtualNetworkName)}.name\r\n");
-        builder.Append("\r\n");
-        builder.Append($"  name             = \"{Name}\"\r\n");
-        builder.Append($"  address_prefixes = [\"{AddressPrefix}\"]\r\n");
-        builder.Append($"}}\r\n");
+            return resource;
+        }
 
-        return builder.ToString();
+        public override string Emit()
+        {
+            StringBuilder builder = new StringBuilder();
+
+            builder.Append($"resource \"{TerraformType}\" \"{TerraformNameFromResourceName(Name)}\" {{\r\n");
+            builder.Append($"  resource_group_name  = \"{ResourceGroupName}\"\r\n");
+            builder.Append($"  virtual_network_name = {VirtualNetwork.TerraformType}.{TerraformNameFromResourceName(VirtualNetworkName)}.name\r\n");
+            builder.Append("\r\n");
+            builder.Append($"  name             = \"{Name}\"\r\n");
+            builder.Append($"  address_prefixes = [\"{AddressPrefix}\"]\r\n");
+            builder.Append($"}}\r\n");
+
+            return builder.ToString();
+        }
     }
 }
