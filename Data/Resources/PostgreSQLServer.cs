@@ -19,6 +19,8 @@ namespace blazorserver.Data.Resources
         public string Version { get; set; }
         public string AdministratorLogin { get; set; }
         public string AdministratorLoginPassword { get; set; }
+        public string SslEnforcement { get; set; }
+        public string MinimumTlsVersion { get; set; }
 
         public static new AzureResource FromJsonElement(JsonElement element)
         {
@@ -33,6 +35,13 @@ namespace blazorserver.Data.Resources
 
             resource.SkuName = element.GetProperty("sku").GetProperty("name").GetString();
 
+            JsonElement properties = element.GetProperty("properties");
+
+            resource.Version = properties.GetProperty("version").GetString();
+            resource.AdministratorLogin = properties.GetProperty("administratorLogin").GetString();
+            resource.SslEnforcement = properties.GetProperty("sslEnforcement").GetString();
+            resource.MinimumTlsVersion = properties.GetProperty("minimalTlsVersion").GetString();
+
             return resource;
         }
 
@@ -46,7 +55,13 @@ namespace blazorserver.Data.Resources
             builder.AppendLine();
             builder.AppendLine($"  name     = \"{Name}\"");
             builder.AppendLine($"  sku_name = \"{SkuName}\"");
+            builder.AppendLine($"  version  = \"{Version}\"");
             builder.AppendLine();
+            builder.AppendLine($"  administrator_login          = \"{AdministratorLogin}\"");
+            builder.AppendLine($"  administrator_login_password = \"{AdministratorLoginPassword}\"");
+            builder.AppendLine();
+            builder.AppendLine($"  ssl_enforcement_enabled = \"{SslEnforcement}\"");
+            builder.AppendLine($"  ssl_minimal_tls_version_enforced = \"{MinimumTlsVersion}\"");
             builder.AppendLine($"}}");
             builder.AppendLine();
 
