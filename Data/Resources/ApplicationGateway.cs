@@ -50,27 +50,8 @@ namespace blazorserver.Data.Resources
             {
                 string name = e.Current.GetProperty("name").GetString();
                 string subnetId = e.Current.GetProperty("properties").GetProperty("subnet").GetProperty("id").GetString();
-                string subnetName = ExtractSubnetName(subnetId);
 
-                if (ResourceInResourceGroup(subnetId, resource.ResourceGroupName))
-                {
-                    // in same resource group so will get picked up as resource, add reference type
-                    resource.GatewayIPConfigurations[name] = $"{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
-                }
-                else
-                {
-                    string[] parts = subnetId.Substring(1).Split('/');
-
-                    resource.GatewayIPConfigurations[name] = $"data.{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
-
-                    DataSource source = new DataSource();
-                    source.ResourceType = Subnet.TerraformType;
-                    source.SourceName = subnetName;
-                    source.Attributes.Add("name", subnetName);
-                    source.Attributes.Add("virtual_network_name", parts[7]);
-                    source.Attributes.Add("resource_group_name", parts[3]);
-                    resource.ExternalReferences.Add(source);
-                }
+                resource.GatewayIPConfigurations[name] = resource.GetSubnetReference(subnetId);
             }
 
             // TODO: sslCertificates

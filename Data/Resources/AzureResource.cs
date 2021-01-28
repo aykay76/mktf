@@ -66,6 +66,34 @@ namespace blazorserver.Data.Resources
             return parts[9];
         }
 
+        protected string GetSubnetReference(string subnetId)
+        {
+            string subnetRef = string.Empty;
+            string subnetName = ExtractSubnetName(subnetId);
+
+            if (ResourceInResourceGroup(subnetId, ResourceGroupName))
+            {
+                // in same resource group so will get picked up as resource, add reference type
+                subnetRef = $"{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
+            }
+            else
+            {
+                string[] parts = subnetId.Substring(1).Split('/');
+
+                subnetRef = $"data.{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
+
+                DataSource source = new DataSource();
+                source.ResourceType = Subnet.TerraformType;
+                source.SourceName = subnetName;
+                source.Attributes.Add("name", subnetName);
+                source.Attributes.Add("virtual_network_name", parts[7]);
+                source.Attributes.Add("resource_group_name", parts[3]);
+                ExternalReferences.Add(source);
+            }
+
+            return subnetRef;
+        }
+
         public virtual string Emit()
         {
             return $"# Unhandled resource: {ID}, {Name}, {Type}, {Location}\r\n";

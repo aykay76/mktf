@@ -39,27 +39,8 @@ namespace blazorserver.Data.Resources
             resource.Location = element.GetProperty("location").GetString();
 
             string subnetId = element.GetProperty("properties").GetProperty("subnet").GetProperty("id").GetString();
-            string subnetName = ExtractSubnetName(subnetId);
 
-            if (ResourceInResourceGroup(subnetId, resource.ResourceGroupName))
-            {
-                // in same resource group so will get picked up as resource, add reference type
-                resource.SubnetId = $"{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
-            }
-            else
-            {
-                string[] parts = subnetId.Substring(1).Split('/');
-
-                resource.SubnetId = $"data.{Subnet.TerraformType}.{TerraformNameFromResourceName(subnetName)}.id";
-
-                DataSource source = new DataSource();
-                source.ResourceType = Subnet.TerraformType;
-                source.SourceName = subnetName;
-                source.Attributes.Add("name", subnetName);
-                source.Attributes.Add("virtual_network_name", parts[7]);
-                source.Attributes.Add("resource_group_name", parts[3]);
-                resource.ExternalReferences.Add(source);
-            }
+            resource.SubnetId = resource.GetSubnetReference(subnetId);
 
             ArrayEnumerator e = element.GetProperty("properties").GetProperty("privateLinkServiceConnections").EnumerateArray();
             while (e.MoveNext())
