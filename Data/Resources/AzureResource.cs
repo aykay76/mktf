@@ -66,6 +66,42 @@ namespace blazorserver.Data.Resources
             return parts[9];
         }
 
+        protected static string ExtractPart(string resourceId, int part)
+        {
+            string[] parts = resourceId.Substring(1).Split('/');
+            return parts[part];
+        }
+
+        // TODO: might be able to refactor to generic method?
+        //"/subscriptions/{subscriptionID}/resourceGroups/{groupName}/providers/Microsoft.Web/serverfarms/{appServicePlanName}".
+        protected string GetAppServicePlanReference(string aspId)
+        {
+            string subnetRef = string.Empty;
+
+            // TODO: refactor to generic get-x-field-from-id method
+            string resourceGroupName = ExtractPart(aspId, 3);
+            string aspName = ExtractPart(aspId, 7);
+
+            if (string.Compare(resourceGroupName, ResourceGroupName, true) == 0)
+            {
+                // in same resource group so will get picked up as resource, add reference type
+                subnetRef = $"{AppServicePlan.TerraformType}.{TerraformNameFromResourceName(aspName)}.id";
+            }
+            else
+            {
+                subnetRef = $"data.{Subnet.TerraformType}.{TerraformNameFromResourceName(aspName)}.id";
+
+                DataSource source = new DataSource();
+                source.ResourceType = Subnet.TerraformType;
+                source.SourceName = aspName;
+                source.Attributes.Add("name", aspName);
+                source.Attributes.Add("resource_group_name", resourceGroupName);
+                ExternalReferences.Add(source);
+            }
+
+            return subnetRef;
+        }
+
         protected string GetSubnetReference(string subnetId)
         {
             string subnetRef = string.Empty;
