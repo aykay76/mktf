@@ -37,19 +37,24 @@ namespace blazorserver.Data.Resources
             resource.Location = element.GetProperty("location").GetString();
 
             JsonElement properties = element.GetProperty("properties");
-            resource.ContainerNetworkInterfaceName = properties.GetProperty("containerNetworkInterfaceConfigurations").GetProperty("name").GetString();
-
-            properties = properties.GetProperty("containerNetworkInterfaceConfigurations").GetProperty("properties");
-            ArrayEnumerator e = properties.GetProperty("ipConfigurations").EnumerateArray();
-            while (e.MoveNext())
+            ArrayEnumerator en = properties.GetProperty("containerNetworkInterfaceConfigurations").EnumerateArray();
+            if (en.MoveNext())
             {
-                string name = e.Current.GetProperty("name").GetString();
-                string subnetId = e.Current.GetProperty("properties").GetProperty("subnet").GetProperty("id").GetString();
-                string subnetRef = resource.GetSubnetReference(subnetId);
+                resource.ContainerNetworkInterfaceName = en.Current.GetProperty("name").GetString();
 
-                resource.IpConfigurations.Add(name, subnetRef);
+                properties = en.Current.GetProperty("properties");
+                ArrayEnumerator e = properties.GetProperty("ipConfigurations").EnumerateArray();
+                while (e.MoveNext())
+                {
+                    string name = e.Current.GetProperty("name").GetString();
+                    string subnetId = e.Current.GetProperty("properties").GetProperty("subnet").GetProperty("id").GetString();
+                    string subnetRef = resource.GetSubnetReference(subnetId);
+
+                    resource.IpConfigurations.Add(name, subnetRef);
+                }
+
+
             }
-
             return resource;
         }
 

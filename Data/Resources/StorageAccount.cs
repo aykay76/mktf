@@ -40,7 +40,14 @@ namespace blazorserver.Data.Resources
             resource.AccountReplicationType = element.GetProperty("sku").GetProperty("name").GetString();
             resource.AccountReplicationType = resource.AccountReplicationType.Replace(resource.AccountTier, "").Replace("_", "");
             resource.HttpsOnly = element.GetProperty("properties").GetProperty("supportsHttpsTrafficOnly").GetBoolean();
-            resource.IsHnsEnabled = element.GetProperty("properties").GetProperty("isHnsEnabled").GetBoolean();
+            try
+            {
+                resource.IsHnsEnabled = element.GetProperty("properties").GetProperty("isHnsEnabled").GetBoolean();
+            }
+            catch
+            {
+            
+            }
 
             return resource;
         }

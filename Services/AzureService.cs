@@ -248,7 +248,7 @@ namespace blazorserver.Data
                             }
                         }
 
-                        string filename = $"../{stub.Type.Replace('/', '_')}.json";
+                        string filename = $"../{stub.Type.Replace('/', '_')}_{stub.Name}.json";
                         if (File.Exists(filename) == false)
                         {
                             string s = result.RootElement.ToString();

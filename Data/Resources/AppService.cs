@@ -33,8 +33,8 @@ namespace blazorserver.Data.Resources
 
             // extract app service plan ID similar to subnet for network profile
             // could be internal or external
-            string aspId = element.GetProperty("???").GetString();
-            resource.AppServicePlanId = resource.GetAppServicePlanReference(aspId);
+            // string aspId = element.GetProperty("???").GetString();
+            // resource.AppServicePlanId = resource.GetAppServicePlanReference(aspId);
 
             return resource;
         }
