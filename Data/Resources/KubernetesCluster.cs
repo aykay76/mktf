@@ -18,6 +18,9 @@ namespace blazorserver.Data.Resources
         public static string TerraformType = "azurerm_kubernetes_cluster";
 
         public string SkuTier { get; set; }
+        public string KubernetesVersion { get; set; }
+        public string DnsPrefix { get; set; }
+        public string FQDN { get; set; }
 
         public KubernetesCluster()
         {
@@ -36,6 +39,11 @@ namespace blazorserver.Data.Resources
 
             resource.SkuTier = element.GetProperty("sku").GetProperty("tier").GetString();
 
+            JsonElement properties = element.GetProperty("properties");
+            resource.KubernetesVersion = properties.GetProperty("kubernetesVersion").GetString();
+            resource.DnsPrefix = properties.GetProperty("dnsPrefix").GetString();
+            resource.FQDN = properties.GetProperty("fqdn").GetString();
+
             return resource;
         }
 
@@ -47,8 +55,12 @@ namespace blazorserver.Data.Resources
             builder.AppendLine($"  resource_group_name = \"{ResourceGroupName}\"");
             builder.AppendLine($"  location            = \"{Location}\"");
             builder.AppendLine();
-            builder.AppendLine($"  name     = \"{Name}\"");
-            builder.AppendLine($"  sku_tier = \"{SkuTier}\"");
+            builder.AppendLine($"  name               = \"{Name}\"");
+            builder.AppendLine($"  sku_tier           = \"{SkuTier}\"");
+            builder.AppendLine($"  kubernetes_version = \"{KubernetesVersion}\"");
+            builder.AppendLine($"  dns_prefix         = \"{DnsPrefix}\"");
+            builder.AppendLine($"  fqdn               = \"{FQDN}\"");
+
             builder.AppendLine($"}}");
             builder.AppendLine();
 
