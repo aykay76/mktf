@@ -15,13 +15,12 @@ namespace blazorserver.Data.Resources
     {
         public static string AzureType = "Microsoft.ContainerService/managedClusters";
         public static string ApiVersion = "2020-11-01";
-        public static string TerraformType = "azurerm_kuberneted_cluster";
+        public static string TerraformType = "azurerm_kubernetes_cluster";
 
-        public List<IpConfiguration> IpConfigs { get; set; }
+        public string SkuTier { get; set; }
 
         public KubernetesCluster()
         {
-            IpConfigs = new List<IpConfiguration>();
         }
 
         public static new AzureResource FromJsonElement(JsonElement element)
@@ -35,6 +34,8 @@ namespace blazorserver.Data.Resources
             resource.Type = element.GetProperty("type").GetString();
             resource.Location = element.GetProperty("location").GetString();
 
+            resource.SkuTier = element.GetProperty("sku").GetProperty("tier").GetString();
+
             return resource;
         }
 
@@ -47,6 +48,7 @@ namespace blazorserver.Data.Resources
             builder.AppendLine($"  location            = \"{Location}\"");
             builder.AppendLine();
             builder.AppendLine($"  name     = \"{Name}\"");
+            builder.AppendLine($"  sku_tier = \"{SkuTier}\"");
             builder.AppendLine($"}}");
             builder.AppendLine();
 
