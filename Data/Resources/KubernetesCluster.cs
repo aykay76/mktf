@@ -22,6 +22,62 @@ namespace blazorserver.Data.Resources
         public string DnsPrefix { get; set; }
         public string FQDN { get; set; }
 
+        public class PoolProfile
+        {
+            public string Name { get; set; }
+            public string VmSize { get; set; }
+            public List<string> AvailabilityZones { get; set; }
+            public int MaxPods { get; set; }
+            public string Type { get; set; }
+            public string SubnetId { get; set; }
+
+            public PoolProfile()
+            {
+                AvailabilityZones = new List<string>();
+            }
+
+            public void FromJsonElement(JsonElement element)
+            {
+                Name = element.GetProperty("name").GetString();
+                VmSize = element.GetProperty("vmSize").GetString();
+
+                ArrayEnumerator e = element.GetProperty("availabilityZones").EnumerateArray();
+                while (e.MoveNext())
+                {
+                    AvailabilityZones.Add(e.Current.GetString());
+                }
+
+                MaxPods = element.GetProperty("maxPods").GetInt32();
+                Type = element.GetProperty("type").GetString();
+            }
+
+            public string Emit()
+            {
+                StringBuilder builder = new StringBuilder();
+
+                builder.AppendLine($"  default_node_pool {{");
+                builder.AppendLine($"    name    = \"{Name}\"");
+                builder.AppendLine($"    vm_size = \"{VmSize}\"");
+                builder.AppendLine($"    availability_zones = [");
+                bool first = true;
+                foreach (string s in AvailabilityZones)
+                {
+                    if (first) first = false;
+                    else builder.Append(",");
+
+                    builder.Append($"\"{s}\"");
+                }
+                builder.AppendLine("]");
+                builder.AppendLine($"  max_pods = {MaxPods}");
+                builder.AppendLine($"  type = \"{Type}\"");
+                builder.AppendLine($"  }}");
+
+                return builder.ToString();
+            }
+        }
+
+        public PoolProfile DefaultNodeProfile { get; set; }
+
         public KubernetesCluster()
         {
         }
@@ -44,6 +100,12 @@ namespace blazorserver.Data.Resources
             resource.DnsPrefix = properties.GetProperty("dnsPrefix").GetString();
             resource.FQDN = properties.GetProperty("fqdn").GetString();
 
+            ArrayEnumerator e = properties.GetProperty("agentPoolProfiles").EnumerateArray();
+            if (e.MoveNext())
+            {
+                resource.DefaultNodeProfile.FromJsonElement(e.Current);
+            }
+
             return resource;
         }
 
@@ -60,7 +122,8 @@ namespace blazorserver.Data.Resources
             builder.AppendLine($"  kubernetes_version = \"{KubernetesVersion}\"");
             builder.AppendLine($"  dns_prefix         = \"{DnsPrefix}\"");
             builder.AppendLine($"  fqdn               = \"{FQDN}\"");
-
+            builder.AppendLine();
+            builder.Append(DefaultNodeProfile.Emit());
             builder.AppendLine($"}}");
             builder.AppendLine();
 
